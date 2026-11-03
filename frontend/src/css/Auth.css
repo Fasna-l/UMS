@@ -1,0 +1,193 @@
+/* ===== Global Authentication Styles ===== */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #eef2ff, #fdf2f8);
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+}
+
+.auth-page *,
+.auth-page *::before,
+.auth-page *::after {
+    box-sizing: border-box;
+}
+
+/* ===== Authentication Card ===== */
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 36px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+}
+
+.auth-card h1 {
+    margin: 0 0 8px;
+    text-align: center;
+    font-size: 30px;
+    color: #1f2937;
+}
+
+.auth-subtitle {
+    margin: 0 0 28px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* ===== Form Layout ===== */
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.auth-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.auth-field label {
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.auth-field input {
+    width: 100%;
+    height: 46px;
+    padding: 0 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    background: #ffffff;
+    color: #111827;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-field input::placeholder {
+    color: #9ca3af;
+}
+
+.auth-field input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* ===== Password Input and Eye Icon ===== */
+
+.password-input-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-container input {
+    padding-right: 45px;
+}
+
+.password-input-container button {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.password-input-container button:hover {
+    color: #4f46e5;
+}
+
+.password-input-container button:focus-visible {
+    outline: 2px solid #6366f1;
+}
+
+/* ===== Validation Messages ===== */
+
+.auth-error {
+    margin: 0;
+    color: #dc2626;
+    font-size: 12px;
+}
+
+/* ===== Submit Button ===== */
+
+.auth-submit {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.auth-submit:hover:not(:disabled) {
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+.auth-submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* ===== Login/Register Links ===== */
+
+.auth-footer {
+    margin: 24px 0 0;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.auth-link {
+    color: #4f46e5;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-link:hover {
+    color: #4338ca;
+    text-decoration: underline;
+}
+
+/* ===== Responsive Design ===== */
+
+@media (max-width: 480px) {
+    .auth-page {
+        padding: 16px;
+    }
+
+    .auth-card {
+        padding: 26px 20px;
+        border-radius: 12px;
+    }
+
+    .auth-card h1 {
+        font-size: 26px;
+    }
+}

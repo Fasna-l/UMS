@@ -1,0 +1,22 @@
+.password-input-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.password-input-container input {
+    padding-right: 40px;
+}
+
+.password-input-container button {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #666;
+    padding: 4px;
+}

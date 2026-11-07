@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Eye, EyeOff } from "lucide-react";
 import "../css/AdminUsers.css";
@@ -11,18 +12,7 @@ function AdminUsers() {
   // Search
   const [search, setSearch] = useState("");
 
-  // Add user
-  const [newUser, setNewUser] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "user",
-  });
-
-  // Add user validation errors
-  const [addErrors, setAddErrors] = useState({});
-
-  // Show or hide add-user password
+  // Password visibility
   const [showAddPassword, setShowAddPassword] = useState(false);
 
   // Edit user
@@ -35,6 +25,41 @@ function AdminUsers() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 5;
+
+  // React Hook Form - Add User
+  const {
+    register: registerAdd,
+    handleSubmit: handleAddSubmit,
+    reset: resetAdd,
+    formState: {
+      errors: addErrors,
+      isSubmitting: isAdding,
+    },
+  } = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "user",
+    },
+  });
+
+  // React Hook Form - Edit User
+  const {
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    reset: resetEdit,
+    formState: {
+      errors: editErrors,
+      isSubmitting: isUpdating,
+    },
+  } = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      role: "user",
+    },
+  });
 
   // Get token from localStorage
   const getHeaders = () => ({
@@ -104,66 +129,8 @@ function AdminUsers() {
     }
   };
 
-  // Handle add user input
-  const handleNewUserChange = (event) => {
-    const { name, value } = event.target;
-
-    setNewUser((previousUser) => ({
-      ...previousUser,
-      [name]: value,
-    }));
-
-    // Clear the error when the user corrects the field
-    setAddErrors((previousErrors) => ({
-      ...previousErrors,
-      [name]: "",
-    }));
-  };
-
-  // Validate add user form
-  const validateAddUser = () => {
-    const errors = {};
-
-    const trimmedName = newUser.name.trim();
-    const trimmedEmail = newUser.email.trim();
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!trimmedName) {
-      errors.name = "Name is required";
-    } else if (trimmedName.length < 2) {
-      errors.name = "Name must contain at least 2 characters";
-    }
-
-    if (!trimmedEmail) {
-      errors.email = "Email is required";
-    } else if (!emailPattern.test(trimmedEmail)) {
-      errors.email = "Please enter a valid email address";
-    }
-
-    if (!newUser.password) {
-      errors.password = "Password is required";
-    } else if (newUser.password.length < 6) {
-      errors.password = "Password must contain at least 6 characters";
-    }
-
-    if (!newUser.role) {
-      errors.role = "Please select a role";
-    }
-
-    setAddErrors(errors);
-
-    return Object.keys(errors).length === 0;
-  };
-
   // Add new user
-  const handleAddUser = async (event) => {
-    event.preventDefault();
-
-    if (!validateAddUser()) {
-      return;
-    }
-
+  const handleAddUser = async (data) => {
     try {
       const response = await fetch(
         "http://localhost:3000/api/users",
@@ -171,9 +138,9 @@ function AdminUsers() {
           method: "POST",
           headers: getHeaders(),
           body: JSON.stringify({
-            ...newUser,
-            name: newUser.name.trim(),
-            email: newUser.email.trim(),
+            ...data,
+            name: data.name.trim(),
+            email: data.email.trim(),
           }),
         }
       );
@@ -186,14 +153,14 @@ function AdminUsers() {
 
       toast.success("User added successfully!");
 
-      setNewUser({
+      // Reset Add User form
+      resetAdd({
         name: "",
         email: "",
         password: "",
         role: "user",
       });
 
-      setAddErrors({});
       setShowAddPassword(false);
       setSearch("");
       setCurrentPage(1);
@@ -209,24 +176,18 @@ function AdminUsers() {
   const handleEditClick = (user) => {
     setEditUser({
       _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
+    });
+
+    // Populate Edit User form
+    resetEdit({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "user",
     });
   };
 
-  // Handle edit input
-  const handleEditChange = (event) => {
-    setEditUser((previousUser) => ({
-      ...previousUser,
-      [event.target.name]: event.target.value,
-    }));
-  };
-
   // Update user
-  const handleUpdateUser = async (event) => {
-    event.preventDefault();
-
+  const handleUpdateUser = async (data) => {
     try {
       const response = await fetch(
         `http://localhost:3000/api/users/${editUser._id}`,
@@ -234,9 +195,9 @@ function AdminUsers() {
           method: "PUT",
           headers: getHeaders(),
           body: JSON.stringify({
-            name: editUser.name.trim(),
-            email: editUser.email.trim(),
-            role: editUser.role,
+            name: data.name.trim(),
+            email: data.email.trim(),
+            role: data.role,
           }),
         }
       );
@@ -250,6 +211,7 @@ function AdminUsers() {
       toast.success("User updated successfully!");
 
       setEditUser(null);
+      resetEdit();
       setSearch("");
       setCurrentPage(1);
 
@@ -336,7 +298,7 @@ function AdminUsers() {
         <h2>Add New User</h2>
 
         <form
-          onSubmit={handleAddUser}
+          onSubmit={handleAddSubmit(handleAddUser)}
           className="add-user-form"
           noValidate
         >
@@ -344,15 +306,24 @@ function AdminUsers() {
           <div className="form-field">
             <input
               type="text"
-              name="name"
               placeholder="Enter name"
-              value={newUser.name}
-              onChange={handleNewUserChange}
+              {...registerAdd("name", {
+                required: "Name is required",
+                validate: {
+                  notEmpty: (value) =>
+                    value.trim().length > 0 ||
+                    "Name cannot be empty",
+
+                  minLength: (value) =>
+                    value.trim().length >= 2 ||
+                    "Name must contain at least 2 characters",
+                },
+              })}
             />
 
             {addErrors.name && (
               <p className="validation-error">
-                {addErrors.name}
+                {addErrors.name.message}
               </p>
             )}
           </div>
@@ -360,15 +331,22 @@ function AdminUsers() {
           <div className="form-field">
             <input
               type="email"
-              name="email"
               placeholder="Enter email"
-              value={newUser.email}
-              onChange={handleNewUserChange}
+              {...registerAdd("email", {
+                required: "Email is required",
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: "Please enter a valid email address",
+                },
+                validate: (value) =>
+                  value.trim().length > 0 ||
+                  "Email is required",
+              })}
             />
 
             {addErrors.email && (
               <p className="validation-error">
-                {addErrors.email}
+                {addErrors.email.message}
               </p>
             )}
           </div>
@@ -376,12 +354,17 @@ function AdminUsers() {
           {/* Password with eye icon */}
           <div className="form-field">
             <div className="admin-password-wrapper">
+
               <input
                 type={showAddPassword ? "text" : "password"}
-                name="password"
                 placeholder="Enter password"
-                value={newUser.password}
-                onChange={handleNewUserChange}
+                {...registerAdd("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 6,
+                    message: "Password must contain at least 6 characters",
+                  },
+                })}
               />
 
               <button
@@ -400,20 +383,21 @@ function AdminUsers() {
                   <Eye size={18} />
                 )}
               </button>
+
             </div>
 
             {addErrors.password && (
               <p className="validation-error">
-                {addErrors.password}
+                {addErrors.password.message}
               </p>
             )}
           </div>
 
           <div className="form-field">
             <select
-              name="role"
-              value={newUser.role}
-              onChange={handleNewUserChange}
+              {...registerAdd("role", {
+                required: "Please select a role",
+              })}
             >
               <option value="user">User</option>
               <option value="admin">Admin</option>
@@ -421,13 +405,17 @@ function AdminUsers() {
 
             {addErrors.role && (
               <p className="validation-error">
-                {addErrors.role}
+                {addErrors.role.message}
               </p>
             )}
           </div>
 
-          <button type="submit" className="add-user-btn">
-            Add User
+          <button
+            type="submit"
+            className="add-user-btn"
+            disabled={isAdding}
+          >
+            {isAdding ? "Adding..." : "Add User"}
           </button>
 
         </form>
@@ -440,45 +428,91 @@ function AdminUsers() {
           <h2>Edit User</h2>
 
           <form
-            onSubmit={handleUpdateUser}
+            onSubmit={handleEditSubmit(handleUpdateUser)}
             className="edit-user-form"
+            noValidate
           >
 
-            <input
-              type="text"
-              name="name"
-              placeholder="Enter name"
-              value={editUser.name}
-              onChange={handleEditChange}
-              required
-            />
+            <div className="form-field">
+              <input
+                type="text"
+                placeholder="Enter name"
+                {...registerEdit("name", {
+                  required: "Name is required",
+                  validate: {
+                    notEmpty: (value) =>
+                      value.trim().length > 0 ||
+                      "Name cannot be empty",
 
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter email"
-              value={editUser.email}
-              onChange={handleEditChange}
-              required
-            />
+                    minLength: (value) =>
+                      value.trim().length >= 2 ||
+                      "Name must contain at least 2 characters",
+                  },
+                })}
+              />
 
-            <select
-              name="role"
-              value={editUser.role}
-              onChange={handleEditChange}
+              {editErrors.name && (
+                <p className="validation-error">
+                  {editErrors.name.message}
+                </p>
+              )}
+            </div>
+
+            <div className="form-field">
+              <input
+                type="email"
+                placeholder="Enter email"
+                {...registerEdit("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Please enter a valid email address",
+                  },
+                  validate: (value) =>
+                    value.trim().length > 0 ||
+                    "Email is required",
+                })}
+              />
+
+              {editErrors.email && (
+                <p className="validation-error">
+                  {editErrors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="form-field">
+              <select
+                {...registerEdit("role", {
+                  required: "Please select a role",
+                })}
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+
+              {editErrors.role && (
+                <p className="validation-error">
+                  {editErrors.role.message}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="add-user-btn"
+              disabled={isUpdating}
             >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-
-            <button type="submit" className="add-user-btn">
-              Update User
+              {isUpdating ? "Updating..." : "Update User"}
             </button>
 
             <button
               type="button"
               className="cancel-edit-btn"
-              onClick={() => setEditUser(null)}
+              onClick={() => {
+                setEditUser(null);
+                resetEdit();
+              }}
             >
               Cancel
             </button>

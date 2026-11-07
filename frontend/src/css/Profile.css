@@ -145,6 +145,13 @@
     color: #555;
 }
 
+.error-message {
+    color: #dc2626;
+    font-size: 14px;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     .profile-card {

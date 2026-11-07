@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
 import { updateProfileAction } from "../features/auth/authActions";
@@ -11,13 +12,23 @@ function Profile() {
     const navigate = useNavigate();
 
     const [profile, setProfile] = useState(null);
-    const [name, setName] = useState("");
     const [selectedImage, setSelectedImage] = useState(null);
     const [preview, setPreview] = useState("");
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
 
     const token = localStorage.getItem("token");
+
+    // React Hook Form
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors, isSubmitting },
+    } = useForm({
+        defaultValues: {
+            name: "",
+        },
+    });
 
     // Fetch logged-in user's profile
     useEffect(() => {
@@ -36,11 +47,18 @@ function Profile() {
                 const result = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(result.message || "Failed to fetch profile");
+                    throw new Error(
+                        result.message || "Failed to fetch profile"
+                    );
                 }
 
                 setProfile(result.user);
-                setName(result.user.name);
+
+                // Set fetched name in React Hook Form
+                reset({
+                    name: result.user.name || "",
+                });
+
                 setPreview(result.user.profileImage || "");
 
                 // Keep Redux and localStorage synchronized
@@ -59,7 +77,16 @@ function Profile() {
         } else {
             navigate("/login", { replace: true });
         }
-    }, [token, dispatch, navigate]);
+    }, [token, dispatch, navigate, reset]);
+
+    // Clean up temporary image preview URLs
+    useEffect(() => {
+        return () => {
+            if (preview.startsWith("blob:")) {
+                URL.revokeObjectURL(preview);
+            }
+        };
+    }, [preview]);
 
     // Handle image selection
     const handleImageChange = (e) => {
@@ -85,21 +112,12 @@ function Profile() {
         setPreview(imagePreview);
     };
 
-    // Update profile
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!name.trim()) {
-            toast.error("Name cannot be empty.");
-            return;
-        }
-
+    // Update profile using React Hook Form
+    const onSubmit = async (data) => {
         try {
-            setSaving(true);
-
             const formData = new FormData();
 
-            formData.append("name", name.trim());
+            formData.append("name", data.name.trim());
 
             if (selectedImage) {
                 formData.append("profileImage", selectedImage);
@@ -119,11 +137,18 @@ function Profile() {
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.message || "Profile update failed");
+                throw new Error(
+                    result.message || "Profile update failed"
+                );
             }
 
             setProfile(result.user);
-            setName(result.user.name);
+
+            // Update React Hook Form with saved name
+            reset({
+                name: result.user.name || "",
+            });
+
             setPreview(result.user.profileImage || "");
             setSelectedImage(null);
 
@@ -137,8 +162,6 @@ function Profile() {
 
         } catch (error) {
             toast.error(error.message);
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -159,15 +182,15 @@ function Profile() {
                 {/* Profile Image */}
                 <div className="profile-image-section">
                     <img
-                        src={
-                            preview ||
-                            "https://placehold.co/150x150?text=Profile"
-                        }
+                        src={preview || "/default-avatar.png"}
                         alt="Profile"
                         className="profile-image"
                     />
 
-                    <label htmlFor="profileImage" className="change-image-button">
+                    <label
+                        htmlFor="profileImage"
+                        className="change-image-button"
+                    >
                         Change Profile Picture
                     </label>
 
@@ -185,17 +208,30 @@ function Profile() {
                 </div>
 
                 {/* Profile Form */}
-                <form onSubmit={handleSubmit} className="profile-form">
+                <form
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="profile-form"
+                >
 
                     <div className="profile-field">
                         <label>Name</label>
+
                         <input
                             type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
                             placeholder="Enter your name"
-                            required
+                            {...register("name", {
+                                required: "Name is required",
+                                validate: (value) =>
+                                    value.trim().length > 0 ||
+                                    "Name cannot be empty",
+                            })}
                         />
+
+                        {errors.name && (
+                            <p className="error-message">
+                                {errors.name.message}
+                            </p>
+                        )}
                     </div>
 
                     <div className="profile-field">
@@ -219,9 +255,9 @@ function Profile() {
                     <button
                         type="submit"
                         className="save-profile-button"
-                        disabled={saving}
+                        disabled={isSubmitting}
                     >
-                        {saving ? "Saving..." : "Save Changes"}
+                        {isSubmitting ? "Saving..." : "Save Changes"}
                     </button>
 
                 </form>
@@ -229,9 +265,13 @@ function Profile() {
                 <button
                     type="button"
                     className="back-profile-button"
-                    onClick={() => navigate(
-                        profile.role === "admin" ? "/admin" : "/home"
-                    )}
+                    onClick={() =>
+                        navigate(
+                            profile.role === "admin"
+                                ? "/admin"
+                                : "/home"
+                        )
+                    }
                 >
                     Back to Dashboard
                 </button>

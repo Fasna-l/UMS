@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import GuestRoute from "./components/GuestRoute";
 
 import LogoutButton from "./components/LogoutButton";
 import AdminUsers from "./pages/AdminUsers";
@@ -131,8 +132,13 @@ function App(){
       <Routes>
         <Route path='/' element={<Navigate to="/login" replace />}/>
         
-        <Route path='/login' element={<Login/>} />
-        <Route path='/register' element={<Register/>} />
+        <Route element={<GuestRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+        </Route>
+        
+        {/* <Route path='/login' element={<Login/>} />
+        <Route path='/register' element={<Register/>} /> */}
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />

@@ -49,10 +49,16 @@ function Login(){
 
             // Redirect according to the user's role.
             if (result.user.role === "admin") {
-                navigate("/admin");
+                navigate("/admin", { replace: true });
             } else {
-                navigate("/home");
+                navigate("/home", { replace: true });
             }
+            
+            // if (result.user.role === "admin") {
+            //     navigate("/admin");
+            // } else {
+            //     navigate("/home");
+            // }
         } catch (error) {
             toast.error(error.message || "Unable to connect to the server");
             console.error("Login error:",error);

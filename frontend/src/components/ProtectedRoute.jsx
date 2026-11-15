@@ -81,7 +81,7 @@ function ProtectedRoute({ allowedRole }) {
         // Verify immediately.
         verifyUser();
 
-        // Verify again every 15 seconds.
+        // Verify again every 1.5 seconds.
         const interval = setInterval(verifyUser, 1500);
 
         return () => {
